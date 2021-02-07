@@ -1,0 +1,166 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: monospace;
+      }
+      #regions_div{
+        border: 2px solid black;
+        width: 100%;
+        height: 90%;
+      }
+      .grid-container {
+        height: 100vh;
+        width: 90vw;
+        
+        display: grid;
+        grid-template-columns: 1fr 1fr ;
+        
+      }
+      #data{
+        width: auto;
+        height: 90%;
+        border: 2px solid brown;
+        padding-left: 80px;
+        margin-left: 10px;
+        
+
+      }
+
+   
+      button {
+        width: 250px;
+        font-size:25px;
+        opacity:0.8;
+        background-color: cadetblue;
+        border-radius: 0px;
+
+      }
+      button:hover {
+        opacity: 1;
+        background-color:cornflowerblue;
+        border-radius: 5px;
+
+      }
+      span {
+        font-size:20px;
+      }
+    </style>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="ISO_POPULATION.json"></script>
+  
+    
+
+    <script type="text/javascript">
+      
+      google.charts.load('current', {
+        'packages':['geochart'],
+        // Note: you will need to get a mapsApiKey for your project.
+        // See: https://developers.google.com/chart/interactive/docs/basic_load_libs#load-settings
+        'mapsApiKey': 'AIzaSyDQTXVqkY4rDw0FcQyBszareCAXVg71NTQ'
+      });
+      
+      
+      let chart;
+      
+      google.charts.setOnLoadCallback(drawRegionsMap);
+
+      async function CovidAPIFetch(country){
+       let DataResult=[]
+       const resp=await fetch(`https://covid-19-statistics.p.rapidapi.com/reports?iso=${country}`, {
+	       "method": "GET",
+	       "headers": {
+		     "x-rapidapi-key": "8422c62639msh5d98953b7965fcep1d9428jsna7a15a9f200c"
+	      }
+        })
+        let data=await resp.json()
+        return data
+        
+        
+      }
+
+     
+  
+     async  function drawRegionsMap(chart) {
+        var container2=document.getElementById("data");
+        container2.innerHTML=``;
+        let arr=[['Country','Population']];
+         
+           for(let i=0;i<COVID.length;i++){
+            arr.push([COVID[i].Name,parseInt(COVID[i].Population)])
+           }
+          
+         
+         console.log(arr)
+            /*let C= await CovidAPIFetch(COVID[i].FetchISO)
+            C=C.data;
+            C.forEach(ele=>{
+              confirmed+=ele.confirmed;
+              deaths+=ele.deaths;
+            })*/
+          
+            
+      
+          
+        
+        var container=document.getElementById("regions_div");
+        var chart = new google.visualization.GeoChart(container);
+       
+        var data = google.visualization.arrayToDataTable(arr);
+  
+        var globeOpts= {colorAxis: {colors: ['blue','green','yellow','red']}};
+        google.visualization.events.addListener(chart, 'select', myClick2)
+        chart.draw(data, globeOpts);
+
+      async function myClick2(){
+          let FatRate;
+          let tot_confirmed=0;
+          let tot_deaths=0;
+          let selection=chart.getSelection();
+          console.log(selection[0].row)
+          let Final= await CovidAPIFetch(COVID[selection[0].row].FetchISO)
+          Final =Final.data
+          console.log(Final)
+          let date=Final[0].date;
+          Final.forEach(element => {
+            tot_confirmed+=element.confirmed;
+            tot_deaths+=element.deaths
+            FatRate=tot_confirmed==0?0:tot_deaths/tot_confirmed
+            
+
+            
+          });
+          container2.innerHTML=`<h1>${COVID[selection[0].row].Name}</h1><br><b><p>Date:</b>${date}</p><br><p><b>Total cases:</b>${tot_confirmed}</p><br><p><b>Total deaths: ${tot_deaths}</b></p>
+          <br><p><b>Fatality Rate(Entire country):</b> ${FatRate}<p>`
+          let dataZoomArray=[['Country','Fatality Rate']]
+          for (let i=0;i<Final.length;i++){
+            dataZoomArray.push([Final[i].region.province,Final[i].fatality_rate])
+
+          }
+          
+          console.log(dataZoomArray)
+          dataZoom=google.visualization.arrayToDataTable(dataZoomArray)
+          var opts= { region: COVID[selection[0].row].Code,colorAxis: {colors: ['blue','green','red']},resolution: "provinces"};
+          chart.draw(dataZoom,opts)
+        }
+        
+
+      }
+      
+    
+
+
+    </script>
+  
+  </head>
+  <body>
+   
+    <button onclick="drawRegionsMap(chart)">Return to global Map</button>
+    <span>Click on a country below to get latest COVID info</span>
+    <div class="grid-container">
+      <div id="regions_div"></div>
+      <div id="data"></div>
+    
+    </div>
+  </body>
+</html>
