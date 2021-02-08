@@ -90,18 +90,6 @@
             arr.push([COVID[i].Name,parseInt(COVID[i].Population)])
            }
           
-         
-         console.log(arr)
-            /*let C= await CovidAPIFetch(COVID[i].FetchISO)
-            C=C.data;
-            C.forEach(ele=>{
-              confirmed+=ele.confirmed;
-              deaths+=ele.deaths;
-            })*/
-          
-            
-      
-          
         
         var container=document.getElementById("regions_div");
         var chart = new google.visualization.GeoChart(container);
@@ -116,6 +104,7 @@
           let FatRate;
           let tot_confirmed=0;
           let tot_deaths=0;
+          let recovered=0;
           let selection=chart.getSelection();
           console.log(selection[0].row)
           let Final= await CovidAPIFetch(COVID[selection[0].row].FetchISO)
@@ -126,12 +115,10 @@
             tot_confirmed+=element.confirmed;
             tot_deaths+=element.deaths
             FatRate=tot_confirmed==0?0:tot_deaths/tot_confirmed
-            
-
-            
+            recovered+=element.recovered;
           });
           container2.innerHTML=`<h1>${COVID[selection[0].row].Name}</h1><br><b><p>Date:</b>${date}</p><br><p><b>Total cases:</b>${tot_confirmed}</p><br><p><b>Total deaths: ${tot_deaths}</b></p>
-          <br><p><b>Fatality Rate(Entire country):</b> ${FatRate}<p>`
+          <br><p><b>Fatality Rate(Entire country):</b> ${FatRate}</p><br><p><b>Recovered:</b>${recovered}</p>`
           let dataZoomArray=[['Country','Fatality Rate']]
           for (let i=0;i<Final.length;i++){
             dataZoomArray.push([Final[i].region.province,Final[i].fatality_rate])
